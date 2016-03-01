@@ -4,7 +4,9 @@
 
 ;; Author: Samuel Laurén <samuel.lauren@iki.fi>
 ;; Keywords: colors
-;; Version: 0.0.1
+;; Version: 0.1.0
+;; URL: https://bitbucket.org/Soft/zenity-color-picker.el
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,15 +26,16 @@
 ;; Insert and adjust colors using Zenity. Zenity
 ;; (https://help.gnome.org/users/zenity/stable/) is obviously required.
 
+;;; KNOWN ISSUES
+
+;; - Color presentation can change between adjustments
+;; - No support for three-letter hex colors
+
+
 ;;; Code:
 
-;; TODO:
-;; - Keep track of color presentation
-;; - Support three-letter hex colors
-
-(eval-when-compile
-  (require 'cl)
-  (require 'thingatpt))
+(require 'cl-lib)
+(require 'thingatpt)
 
 (defvar zc-zenity-bin "zenity")
 
@@ -87,7 +90,7 @@ NIL if selection was cancelled."
                               (when initial
                                 (list (format "--color=%s" (zc-color-to-hex initial)))))) 
           (`0 (zc-to-color (buffer-string)))))
-    (error "Could not find zenity")))
+    (error "Could not find %s" zc-zenity-bin)))
 
 (defun zc-bounds-of-color-at-point ()
   (save-excursion
