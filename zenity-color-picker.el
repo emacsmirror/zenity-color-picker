@@ -37,116 +37,116 @@
 (require 'cl-lib)
 (require 'thingatpt)
 
-(defvar zcp-zenity-bin "zenity")
+(defvar zenity-cp-zenity-bin "zenity")
 
-(defun zcp-to-color (str)
-  (cond ((zcp-hex-color-p str) (zcp-hex-to-color str))
-        ((zcp-rgb-color-p str) (zcp-rgb-to-color str))
+(defun zenity-cp-to-color (str)
+  (cond ((zenity-cp-hex-color-p str) (zenity-cp-hex-to-color str))
+        ((zenity-cp-rgb-color-p str) (zenity-cp-rgb-to-color str))
         (t nil)))
 
-(defconst zcp-hex-color-regexp
+(defconst zenity-cp-hex-color-regexp
   "#\\([a-f0-9]\\{2\\}\\)\\([a-f0-9]\\{2\\}\\)\\([a-f0-9]\\{2\\}\\)")
 
-(defconst zcp-rgb-color-regexp
+(defconst zenity-cp-rgb-color-regexp
   "rgb(\\([0-9]\\{1,3\\}\\),\\([0-9]\\{1,3\\}\\),\\([0-9]\\{1,3\\}\\))")
 
-(defun zcp-hex-color-p (str)
+(defun zenity-cp-hex-color-p (str)
   "Check if STR is a valid hex formatted color string"
-  (and (string-match-p zcp-hex-color-regexp (downcase str)) t))
+  (and (string-match-p zenity-cp-hex-color-regexp (downcase str)) t))
 
-(defun zcp-hex-to-color (str)
+(defun zenity-cp-hex-to-color (str)
   (save-match-data
-    (string-match zcp-hex-color-regexp str)
+    (string-match zenity-cp-hex-color-regexp str)
     (mapcar
      (lambda (index)
        (string-to-number (match-string index str) 16))
      '(1 2 3))))
 
-(defun zcp-rgb-color-p (str)
+(defun zenity-cp-rgb-color-p (str)
   "Check if STR is a valid rgb formatted color string"
-  (and (string-match-p zcp-rgb-color-regexp str) t))
+  (and (string-match-p zenity-cp-rgb-color-regexp str) t))
 
-(defun zcp-rgb-to-color (str)
+(defun zenity-cp-rgb-to-color (str)
   (save-match-data
-    (string-match zcp-rgb-color-regexp str)
+    (string-match zenity-cp-rgb-color-regexp str)
     (mapcar
      (lambda (index)
        (string-to-number (match-string index str)))
      '(1 2 3))))
 
-(defun zcp--short-p (n)
+(defun zenity-cp--short-p (n)
   (= (lsh n -4) (logand n #xf)))
 
-(defun zcp-color-to-hex (color &optional short)
+(defun zenity-cp-color-to-hex (color &optional short)
   "Convert (R G B) list to hex string. If SHORT is not NIL, try
 to use CSS-style shorthand notation."
   (cl-destructuring-bind (r g b) color
-    (if (and short (zcp--short-p r) (zcp--short-p g) (zcp--short-p b))
+    (if (and short (zenity-cp--short-p r) (zenity-cp--short-p g) (zenity-cp--short-p b))
         (format "#%x%x%x"
                 (logand r #xf)
                 (logand g #xf)
                 (logand b #xf))
       (format "#%02x%02x%02x" r g b))))
 
-(defun zcp-color-picker (&optional initial)
+(defun zenity-cp-color-picker (&optional initial)
   "Execute zenity color picker.
 
 Returns the selected color as a list of form (RED GREEN BLUE) or
 NIL if selection was cancelled."
-  (if (executable-find zcp-zenity-bin)
+  (if (executable-find zenity-cp-zenity-bin)
       (with-temp-buffer
         (pcase (apply 'call-process
-                      (append `(,zcp-zenity-bin nil (,(current-buffer) nil) nil "--color-selection")
+                      (append `(,zenity-cp-zenity-bin nil (,(current-buffer) nil) nil "--color-selection")
                               (when initial
-                                (list (format "--color=%s" (zcp-color-to-hex initial)))))) 
-          (`0 (zcp-to-color (buffer-string)))))
-    (error "Could not find %s" zcp-zenity-bin)))
+                                (list (format "--color=%s" (zenity-cp-color-to-hex initial)))))) 
+          (`0 (zenity-cp-to-color (buffer-string)))))
+    (error "Could not find %s" zenity-cp-zenity-bin)))
 
-(defun zcp-bounds-of-color-at-point ()
+(defun zenity-cp-bounds-of-color-at-point ()
   (save-excursion
     (skip-chars-backward "#a-fA-F0-9")
-    (when (looking-at zcp-hex-color-regexp)
+    (when (looking-at zenity-cp-hex-color-regexp)
       (cons (point) (match-end 0)))))
 
 (put 'color 'bounds-of-thing-at-point
-     'zcp-bounds-of-color-at-point)
+     'zenity-cp-bounds-of-color-at-point)
 
-(defun zcp-color-at-point ()
+(defun zenity-cp-color-at-point ()
   (let ((color (thing-at-point 'color t)))
     (when color
-      (zcp-to-color color))))
+      (zenity-cp-to-color color))))
 
-(defun zcp-transform-color-at-point (transform)
-  (let ((bounds (zcp-bounds-of-color-at-point))
-        (old (zcp-color-at-point)))
+(defun zenity-cp-transform-color-at-point (transform)
+  (let ((bounds (zenity-cp-bounds-of-color-at-point))
+        (old (zenity-cp-color-at-point)))
     (when old
       (let ((new (funcall transform old)))
         (when new
           (save-excursion
             (goto-char (car bounds))
             (delete-region (car bounds) (cdr bounds))
-            (insert (zcp-color-to-hex new))))))))
+            (insert (zenity-cp-color-to-hex new))))))))
 
 ;;;###autoload
-(defun zcp-adjust-color-at-point ()
+(defun zenity-cp-adjust-color-at-point ()
   "Adjust color at point"
   (interactive)
-  (zcp-transform-color-at-point #'zcp-color-picker))
+  (zenity-cp-transform-color-at-point #'zenity-cp-color-picker))
 
 ;;;###autoload
-(defun zcp-insert-color-at-point ()
+(defun zenity-cp-insert-color-at-point ()
   "Insert color at point"
   (interactive)
-  (let ((color (zcp-color-picker)))
-    (insert (zcp-color-to-hex color))))
+  (let ((color (zenity-cp-color-picker)))
+    (insert (zenity-cp-color-to-hex color))))
 
 ;;;###autoload
-(defun zcp-color-at-point-dwim ()
+(defun zenity-cp-color-at-point-dwim ()
   "Adjust or insert color at point"
   (interactive)
-  (if (zcp-color-at-point)
-      (zcp-adjust-color-at-point)
-    (zcp-insert-color-at-point)))
+  (if (zenity-cp-color-at-point)
+      (zenity-cp-adjust-color-at-point)
+    (zenity-cp-insert-color-at-point)))
 
 (provide 'zenity-color-picker)
 ;;; zenity-color-picker.el ends here
